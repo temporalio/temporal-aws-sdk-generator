@@ -1,17 +1,16 @@
 package internal
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"text/template"
 )
 
 const TEMPLATE_SUFFIX = ".tmpl"
-const GLOBAL_SUFFIX = "_global"
-const TEMPLATE_GLOBAL_SUFFIX = GLOBAL_SUFFIX + TEMPLATE_SUFFIX
 
 func toPrefix(packageName string) string {
 	if packageName == "" {
@@ -46,7 +45,7 @@ func (g *TemporalAWSGenerator) GenerateCode(outputDir string, definitions []*Int
 		}
 	}
 	for _, templateFile := range templateFiles {
-		err := g.generateFromSingleTemplate(templateFile+".tmpl", outputDir+"/aws"+templateFile, definitions)
+		err := g.generateFromSingleTemplate(templateFile+".tmpl", outputDir, definitions)
 		if err != nil {
 			return err
 		}
@@ -55,73 +54,16 @@ func (g *TemporalAWSGenerator) GenerateCode(outputDir string, definitions []*Int
 }
 
 func (g *TemporalAWSGenerator) generateFromSingleTemplate(templateFile string, outputDir string, definitions []*InterfaceDefinition) error {
-	if strings.HasSuffix(templateFile, TEMPLATE_GLOBAL_SUFFIX) {
-		return g.generateGlobal(templateFile, strings.TrimSuffix(outputDir, GLOBAL_SUFFIX), definitions)
-	}
-	g.outputStructs = make(map[string]bool)
-	for _, definition := range definitions {
-		err := g.generateOneService(templateFile, outputDir, *definition)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (g *TemporalAWSGenerator) generateOneService(templateFile string, outputDir string, definition InterfaceDefinition) error {
+	writer := &MultiFileWriter{outputDir: outputDir}
+	defer writer.Close()
 	funcMap := template.FuncMap{
-		"ToUpper":   strings.ToUpper,
-		"ToLower":   strings.ToLower,
-		"HasPrefix": strings.HasPrefix,
-		"ToPrefix":  toPrefix,
-		"IsDuplicatedOutput": func(output *StructDefinition) bool {
-			if output == nil {
-				return true // skip generation on nil
+		"SetFileName": func(name string) (string, error) {
+			err := writer.SetCurrentFile(name)
+			if err != nil {
+				return "", err
 			}
-			_, ok := g.outputStructs[output.Package+output.Name]
-			return ok
+			return "", nil
 		},
-		"IsNil": func(value interface{}) bool {
-			return value == nil || (reflect.ValueOf(value).Kind() == reflect.Ptr && reflect.ValueOf(value).IsNil())
-		},
-		"HasField": func(structure *StructDefinition, fieldName string) bool {
-			_, ok := structure.Fields[fieldName]
-			return ok
-		},
-	}
-
-	templates, err := template.New(templateFile).Funcs(funcMap).ParseFiles(g.TemplateDir + "/" + templateFile)
-	if err != nil {
-		return err
-	}
-	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
-		err = os.Mkdir(outputDir, 0700)
-		if err != nil {
-			return err
-		}
-	}
-	output := templateFile[0 : len(templateFile)-len(TEMPLATE_SUFFIX)]
-	outputFile := outputDir + "/" + strings.ToLower(definition.Name) + "_" + output + ".go"
-	f, err := os.Create(outputFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	err = templates.Execute(f, definition)
-	if err != nil {
-		return err
-	}
-	for _, method := range definition.Methods {
-		if method.Output != nil {
-			g.outputStructs[method.Output.Package+method.Output.Name] = true
-		}
-	}
-	fmt.Println(outputFile)
-	return nil
-}
-
-func (g *TemporalAWSGenerator) generateGlobal(templateFile string, outputDir string, definitions []*InterfaceDefinition) error {
-	funcMap := template.FuncMap{
 		"ToUpper":   strings.ToUpper,
 		"ToLower":   strings.ToLower,
 		"HasPrefix": strings.HasPrefix,
@@ -141,17 +83,45 @@ func (g *TemporalAWSGenerator) generateGlobal(templateFile string, outputDir str
 			return err
 		}
 	}
-	output := templateFile[0 : len(templateFile)-len(TEMPLATE_GLOBAL_SUFFIX)]
-	outputFile := outputDir + "/aws" + strings.ToLower(output) + ".go"
+	return templates.Execute(writer, definitions)
+}
+
+type MultiFileWriter struct {
+	outputDir   string
+	currentFile *os.File
+}
+
+func (m *MultiFileWriter) Write(p []byte) (n int, err error) {
+	if len(p) == 0 || m.currentFile == nil {
+		return len(p), nil
+	}
+	return m.currentFile.Write(p)
+}
+
+func (m *MultiFileWriter) SetCurrentFile(name string) error {
+	outputFile := m.outputDir + "/" + name
+	if err := os.MkdirAll(filepath.Dir(outputFile), 0770); err != nil {
+		return err
+	}
 	f, err := os.Create(outputFile)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	err = templates.Execute(f, definitions)
-	if err != nil {
-		return err
+	if m.currentFile != nil {
+		err = m.currentFile.Close()
+		if err != nil {
+			return err
+		}
 	}
-	fmt.Println(outputFile)
+	m.currentFile = f
 	return nil
+}
+
+func (m *MultiFileWriter) Close() {
+	if m.currentFile != nil {
+		err := m.currentFile.Close()
+		if err != nil {
+			log.Printf("Failure closing file: %v", err)
+		}
+	}
 }

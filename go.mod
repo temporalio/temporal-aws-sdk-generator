@@ -3,6 +3,7 @@ module temporal.io/temporal-aws-sdk-generator
 go 1.14
 
 require (
+	github.com/aws/aws-sdk-go v1.35.7 // indirect
 	github.com/spf13/afero v1.4.1
 	github.com/stretchr/testify v1.4.0
 	github.com/urfave/cli/v2 v2.2.0

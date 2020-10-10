@@ -9,9 +9,15 @@ import (
 )
 
 const testTemplate = `
+{{- SetFileName "foo/output1.go" -}}
+Test output1
+{{ SetFileName "foo/output2.go" -}}
+Test output2
 `
 
-const expected = `
+const expected1 = `Test output1
+`
+const expected2 = `Test output2
 `
 
 func TestGenerator(t *testing.T) {
@@ -40,13 +46,25 @@ func TestGenerator(t *testing.T) {
 		"--output-dir=" + tempDir,
 		"--service=s3",
 	}
-	run(args)
-
-	// Compare output
-	generatedFileName := tempDir + "/s3_test.go"
-	generated, err := ioutil.ReadFile(generatedFileName)
+	err = run(args)
 	if err != nil {
-		t.Fatal("Failed to open the generated file", generatedFileName, err)
+		panic(err)
 	}
-	assert.Equal(t, expected, generated)
+	// Compare output
+	{
+		generatedFileName := tempDir + "/foo/output1.go"
+		generated, err := ioutil.ReadFile(generatedFileName)
+		if err != nil {
+			t.Fatal("Failed to open the generated file", generatedFileName, err)
+		}
+		assert.Equal(t, expected1, string(generated))
+	}
+	{
+		generatedFileName := tempDir + "/foo/output2.go"
+		generated, err := ioutil.ReadFile(generatedFileName)
+		if err != nil {
+			t.Fatal("Failed to open the generated file", generatedFileName, err)
+		}
+		assert.Equal(t, expected2, string(generated))
+	}
 }
