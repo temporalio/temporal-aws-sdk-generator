@@ -11,6 +11,13 @@ import (
 )
 
 func main() {
+	err := run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run(args []string) error {
 	var templateDir, outputDir, service string
 
 	app := cli.NewApp()
@@ -20,13 +27,13 @@ func main() {
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:        "template-dir",
-			Value:       "./cmd/temporal-aws-sdk-gen/templates",
+			Required:    true,
 			Usage:       "location of code generation template directory",
 			Destination: &templateDir,
 		},
 		&cli.StringFlag{
 			Name:        "output-dir",
-			Value:       ".",
+			Required:    true,
 			Usage:       "generated code location",
 			Destination: &outputDir,
 		},
@@ -41,12 +48,9 @@ func main() {
 		s := strings.ToLower(service)
 		definitions, err := internal.ParseAwsSdk(s)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		return generator.GenerateCode(outputDir, definitions)
 	}
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return app.Run(args)
 }
