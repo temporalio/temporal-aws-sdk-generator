@@ -10,14 +10,22 @@ import (
 
 const testTemplate = `
 {{- SetFileName "foo/output1.go" -}}
-Test output1
+{{ ToUpper "abA"}}
+{{ ToLower "ABa" }}
+{{ HasPrefix "abac" "ab" }}
+{{ CapitalizeFirstLetter "abcd" }}
+{{ IsNil nil }}
 {{ SetFileName "foo/output2.go" -}}
-Test output2
+{{ (index . 0).Name }}
 `
 
-const expected1 = `Test output1
+const expected1 = `ABA
+aba
+true
+Abcd
+true
 `
-const expected2 = `Test output2
+const expected2 = `S3
 `
 
 func TestGenerator(t *testing.T) {

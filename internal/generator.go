@@ -12,7 +12,7 @@ import (
 
 const TEMPLATE_SUFFIX = ".tmpl"
 
-func toPrefix(packageName string) string {
+func capitalizeFirstLetter(packageName string) string {
 	if packageName == "" {
 		return packageName
 	}
@@ -67,7 +67,7 @@ func (g *TemporalAWSGenerator) generateFromSingleTemplate(templateFile string, o
 		"ToUpper":   strings.ToUpper,
 		"ToLower":   strings.ToLower,
 		"HasPrefix": strings.HasPrefix,
-		"ToPrefix":  toPrefix,
+		"CapitalizeFirstLetter":  capitalizeFirstLetter,
 		"IsNil": func(value interface{}) bool {
 			return value == nil || (reflect.ValueOf(value).Kind() == reflect.Ptr && reflect.ValueOf(value).IsNil())
 		},
