@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -16,7 +17,8 @@ const testTemplate = `
 {{ CapitalizeFirstLetter "abcd" }}
 {{ IsNil nil }}
 {{ SetFileName "foo/output2.go" -}}
-{{ (index . 0).Name }}
+{{ (index .Services 0).Name }}
+{{ .Version -}}
 `
 
 const expected1 = `ABA
@@ -25,8 +27,9 @@ true
 Abcd
 true
 `
-const expected2 = `S3
-`
+
+var expected2 = `S3
+` + aws.SDKVersion
 
 func TestGenerator(t *testing.T) {
 	// Create temporary directory with a template file in it

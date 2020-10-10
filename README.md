@@ -9,7 +9,7 @@ to them a list of AWS Service definitions parsed from AWS Go SDK.
 ## Template File Format
 
 Templates must be in [Go template format](https://golang.org/pkg/text/template/).
-The data structure passed to the templates is [][InterfaceDefinition](internal/definitions.go).
+The data structure passed to the templates is [AWSSDKDefinition](internal/definitions.go).
 A template file must call `SetFileName` function at the beginning to specify the output file name.
 It is allowed to call `SetFileName` multiple times to generate multiple files from the same template.
 

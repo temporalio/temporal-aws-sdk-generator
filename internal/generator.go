@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"io/ioutil"
 	"log"
 	"os"
@@ -64,10 +65,10 @@ func (g *TemporalAWSGenerator) generateFromSingleTemplate(templateFile string, o
 			}
 			return "", nil
 		},
-		"ToUpper":   strings.ToUpper,
-		"ToLower":   strings.ToLower,
-		"HasPrefix": strings.HasPrefix,
-		"CapitalizeFirstLetter":  capitalizeFirstLetter,
+		"ToUpper":               strings.ToUpper,
+		"ToLower":               strings.ToLower,
+		"HasPrefix":             strings.HasPrefix,
+		"CapitalizeFirstLetter": capitalizeFirstLetter,
 		"IsNil": func(value interface{}) bool {
 			return value == nil || (reflect.ValueOf(value).Kind() == reflect.Ptr && reflect.ValueOf(value).IsNil())
 		},
@@ -83,7 +84,8 @@ func (g *TemporalAWSGenerator) generateFromSingleTemplate(templateFile string, o
 			return err
 		}
 	}
-	return templates.Execute(writer, definitions)
+	awsSDK := &AWSSDKDefinition{Version: aws.SDKVersion, Services: definitions}
+	return templates.Execute(writer, awsSDK)
 }
 
 type MultiFileWriter struct {

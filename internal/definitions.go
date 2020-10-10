@@ -5,41 +5,48 @@ import (
 	"sort"
 )
 
-type FieldDefinition struct {
-	Name string
-	Type string
-}
+type (
+	AWSSDKDefinition struct {
+		Version  string
+		Services []*InterfaceDefinition
+	}
 
-type StructDefinition struct {
-	Package string
-	Name    string
-	Fields  map[string]*FieldDefinition
-}
+	InterfaceDefinition struct {
+		// Service name (lower-cased, URL compatible service name)
+		ID string
+		// Service name (friendly name)
+		Name string
+		// Service methods
+		Methods []*MethodDefinition
+	}
+
+	MethodDefinition struct {
+		// Method name
+		Name string
+		// Input structure
+		Input *StructDefinition
+		// Output structure
+		Output *StructDefinition
+	}
+
+	StructDefinition struct {
+		Package string
+		Name    string
+		Fields  map[string]*FieldDefinition
+	}
+
+	FieldDefinition struct {
+		Name string
+		Type string
+	}
+)
 
 func NewStructDefinition(pkg, name string) *StructDefinition {
 	return &StructDefinition{Package: pkg, Name: name, Fields: make(map[string]*FieldDefinition)}
 }
 
-type MethodDefinition struct {
-	// Method name
-	Name string
-	// Input structure
-	Input *StructDefinition
-	// Output structure
-	Output *StructDefinition
-}
-
 func (m *MethodDefinition) String() string {
 	return fmt.Sprintf("%v(%v) %v", m.Name, m.Input, m.Output)
-}
-
-type InterfaceDefinition struct {
-	// Service name (lower-cased, URL compatible service name)
-	ID string
-	// Service name (friendly name)
-	Name string
-	// Service methods
-	Methods []*MethodDefinition
 }
 
 func (i InterfaceDefinition) Imports() []string {
