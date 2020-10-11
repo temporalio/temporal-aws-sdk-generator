@@ -16,6 +16,10 @@ const testTemplate = `
 {{ HasPrefix "abac" "ab" }}
 {{ CapitalizeFirstLetter "abcd" }}
 {{ IsNil nil }}
+{{ IsDuplicate "collection1" "val1" }}
+{{ IsDuplicate "collection1" "val2" }}
+{{ IsDuplicate "collection1" "val1" }}
+{{ IsDuplicate "collection2" "val1" }}
 {{ SetFileName "foo/output2.go" -}}
 {{ (index .Services 0).Name }}
 {{ .Version -}}
@@ -26,6 +30,10 @@ aba
 true
 Abcd
 true
+false
+false
+true
+false
 `
 
 var expected2 = `S3

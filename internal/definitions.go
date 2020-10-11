@@ -45,6 +45,11 @@ func NewStructDefinition(pkg, name string) *StructDefinition {
 	return &StructDefinition{Package: pkg, Name: name, Fields: make(map[string]*FieldDefinition)}
 }
 
+func (s *StructDefinition) HasField(fieldName string) bool {
+	_, ok := s.Fields[fieldName]
+	return ok
+}
+
 func (m *MethodDefinition) String() string {
 	return fmt.Sprintf("%v(%v) %v", m.Name, m.Input, m.Output)
 }

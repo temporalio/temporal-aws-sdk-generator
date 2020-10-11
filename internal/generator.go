@@ -57,6 +57,7 @@ func (g *TemporalAWSGenerator) GenerateCode(outputDir string, definitions []*Int
 func (g *TemporalAWSGenerator) generateFromSingleTemplate(templateFile string, outputDir string, definitions []*InterfaceDefinition) error {
 	writer := &MultiFileWriter{outputDir: outputDir}
 	defer writer.Close()
+	deduper := &deduper{collections: make(map[string]map[string]struct{})}
 	funcMap := template.FuncMap{
 		"SetFileName": func(name string) (string, error) {
 			err := writer.SetCurrentFile(name)
@@ -72,6 +73,7 @@ func (g *TemporalAWSGenerator) generateFromSingleTemplate(templateFile string, o
 		"IsNil": func(value interface{}) bool {
 			return value == nil || (reflect.ValueOf(value).Kind() == reflect.Ptr && reflect.ValueOf(value).IsNil())
 		},
+		"IsDuplicate": deduper.IsDuplicate,
 	}
 
 	templates, err := template.New(templateFile).Funcs(funcMap).ParseFiles(g.TemplateDir + "/" + templateFile)
@@ -86,6 +88,26 @@ func (g *TemporalAWSGenerator) generateFromSingleTemplate(templateFile string, o
 	}
 	awsSDK := &AWSSDKDefinition{Version: aws.SDKVersion, Services: definitions}
 	return templates.Execute(writer, awsSDK)
+}
+
+type deduper struct {
+	collections map[string]map[string]struct{}
+}
+
+// IsDuplicate returns false for the first call and then it returns true for all other calls for the
+// same collection and value.
+func (d *deduper) IsDuplicate(collectionName, value string) bool {
+	collection, ok := d.collections[collectionName]
+	if !ok {
+		collection = make(map[string]struct{})
+		d.collections[collectionName] = collection
+	}
+	_, ok = collection[value]
+	if ok {
+		return true
+	}
+	collection[value] = struct{}{}
+	return false
 }
 
 type MultiFileWriter struct {
