@@ -3,7 +3,7 @@
 | :warning: **This code is an experiment**: Absolutely no guarantee of backwards compatibility |
 | --- |
 
-This repository contains generator that generates code from template files passing
+This repository  contains generator that generates code from template files passing
 to them a list of AWS Service definitions parsed from AWS Go SDK.
 
 ## Installation 
