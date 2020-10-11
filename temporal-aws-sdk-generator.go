@@ -7,7 +7,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"temporal.io/temporal-aws-sdk-generator/internal"
+	"go.temporal.io/aws-sdk-generator/internal"
 )
 
 func main() {
