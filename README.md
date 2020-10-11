@@ -6,6 +6,22 @@
 This repository contains generator that generates code from template files passing
 to them a list of AWS Service definitions parsed from AWS Go SDK.
 
+## Installation 
+```
+go get go.temporal.io/aws-sdk-generator 
+```
+
+## Usage
+
+```
+aws-sdk-generator --template-dir <dir> --output-dir <dir>
+```
+## Options
+
+* `template-dir` directory with template files. Only files with `.tmpl` extension are processed. Required.
+* `output-dir` base directory for generated files. Required.
+* `service` name of AWS service to generate code for. Optional. Default is all the services.
+
 ## Template File Format
 
 Templates must be in [Go template format](https://golang.org/pkg/text/template/).
@@ -25,8 +41,3 @@ The following functions are available inside templates:
 * `IsNil(value) boolean` returns if the value is nil
 * `IsDuplicate(collection, value string) bool` used to deduplicate values
 
-## Generator Options
-
-* `template-dir` directory with template files. Only files with `.tmpl` extension are processed. Required.
-* `output-dir` base directory for generated files. Required.
-* `service` name of AWS service to generate code for. Optional. Default is all the services.
